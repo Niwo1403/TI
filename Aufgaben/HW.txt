@@ -1,1 +1,0 @@
-okokokokokgit remote set-url origin https://github.com/Niwo1493/TI.git
