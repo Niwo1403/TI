@@ -39,7 +39,7 @@ int main(int argc, char *argv[]){
 	int  a, b;					// two factors
 
 	// read first line
-	char *check = fgets(buffer,MAXLINE,fileptr);//# Was ist, falls die Zeile mehr als MAXLINE Zeichen beinhaltet?
+	char *check = fgets(buffer,MAXLINE,fileptr);//### Was ist, falls die Zeile mehr als MAXLINE Zeichen beinhaltet?
 	if(check == NULL){
 		fprintf(stderr, RED BOLD "ERROR: Read-Error\n");
 		return(1);
@@ -121,7 +121,7 @@ int invalidFirstLine(char arr[]){
 		2) only one '*' exists
 		3) first and last entry is digit and not a '*'
 */
-int invalidFormat(char arr[]){
+int invalidFormat(char arr[]){//### Parameter sollten eig. keine Arrays sein, esser Pointer (werden als Pointer übergeben und Grlße muss eig. konstant sein)
 	int starCounter = 0;	// counter for '*'
 	int flagA = 0; 			// exists a of a*b?
 	int flagB = 0; 			// exists b of a*b?
@@ -131,7 +131,7 @@ int invalidFormat(char arr[]){
 		// ENTER
 		if(arr[i] == '\n'){
 			// invalid #'*'
-			if(starCounter != 1 || !flagA || !flagB)
+			if(starCounter != 1 || !flagA || !flagB)//###ist flagB nicht unnötig, da (flagB ->flagA) gilt?
 				return(1);
 			// it is still possible that this exists: 121*\n
 			else if(i != 0 && arr[i-1] == 42)
@@ -147,8 +147,9 @@ int invalidFormat(char arr[]){
 				continue;
 		}
 		// 1) '*'
-		else if(42 == arr[i]){
+		else if(42 == arr[i]){//'*'==42
 			starCounter++;
+			//### muss nicht noch flagB auf 0 gesetzt werden? um dann zu testen ob noch eine Zahl folgt
 			// 2) & 3)
 			if(starCounter > 1 || i == 0)
 				return(1);
