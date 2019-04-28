@@ -4,13 +4,9 @@
 
 
 	TO DO:
-		1) 	Gescheite Fehlermeldungen + Begruendung 
-			ohne <stdio.h> & <stdlib.h>
-
-		2) 	Ordner trashcan unsichtbar machen koennen
-
-		3) 	LIST-Funktion kann bis jetzt noch nix auflisten
-			weil wir prinf() nicht nutzen ḱoennen
+		1) 	Ordner trashcan unsichtbar machen koennen
+		
+		ist er doch, da . dvor steht...
 */
 
 #include <sys/stat.h>	// mkdir & open
@@ -42,7 +38,7 @@ int main(int argc, char *argv[]){
 	else if(argc == 2)  a = trashcan(argv[1], "/");
 	else 				a = trashcan(argv[1], argv[2]);
 
-	// if(a) printf("Fehler\n");
+	if(a) write(1,"Fehler\n", 8);
 
     return(a);
 }
@@ -55,12 +51,14 @@ int copy(char *sourcename, char *targetname){
 	int checkRead = 0, checkWrite = 0; 	// wie viele Bytes wurden gelesen/geschrieben
 
 	// pruefen, ob Quelle existiert
-	// printf("%s\n", sourcename);
+	write(1,sourcename,myStrlen(sourcename));
+	write(1,"\n",2);
 	fdSource = open(sourcename, O_RDONLY);
 	if(fdSource < 0) return(1); 
 
 	// pruefen, ob Ziel schon existiert
-	// printf("%s\n", targetname);
+	write(1,targetname,myStrlen(targetname));
+	write(1,"\n",2);
 	fdTryTarget = open(targetname, O_WRONLY);
 	// falls nein, Datei erstellen
 	if(fdTryTarget < 0){
@@ -73,7 +71,21 @@ int copy(char *sourcename, char *targetname){
 			do{							// sonst in Ziel hineinschreiben
 				// so viel schreiben, wie gelesen wurde
 				checkWrite += write(fdTarget, buffer, checkRead);	
-			}while(checkRead != checkWrite);
+			}while(checkRead != checkWrite);//###ist das do whie nicht unnötig? ersetzt ein while (checkRead != checkWrite) nicht das elseif und else ? 
+			/*###
+			also:
+				while (checkRead != checkWrite){
+					checkWrite += write(fdTarget, buffer, checkRead);
+				}
+				break;
+			anstatt:
+				else if(checkRead == 0) break;	// Falls am Ende der Datei, stopppe
+				do{							// sonst in Ziel hineinschreiben
+					// so viel schreiben, wie gelesen wurde
+					checkWrite += write(fdTarget, buffer, checkRead);	
+				}while(checkRead != checkWrite);
+			*/
+			
 			checkRead = 0;
 			checkWrite = 0;
 		}
@@ -89,7 +101,7 @@ int copy(char *sourcename, char *targetname){
 // MAIN-ENDE
 
 int trashcan(char *mode, char *file){	// return 1 == FAIL,	return 0 == SUCCESS
-	char *trashcanName = ".trashcan";
+	char *trashcanName = ".trashcan";//###alternativ /.trashcan, dann musst du nicht immer strcat nutzen...
 	int check;	// fuer mkdir, memset (erfolgreich?)
 
 	// Papierkorb erstellen, falls nicht vorhanden
@@ -106,7 +118,10 @@ int trashcan(char *mode, char *file){	// return 1 == FAIL,	return 0 == SUCCESS
     if (getcwd(path, sizeof(path)) == NULL) // Fehler
     	return(1);	
 
-    // printf("%s, %s\n", mode, file);
+	write(1,mode,myStrlen(mode));
+	write(1,", ",3);
+	write(1,mode,myStrlen(mode));
+	write(1,"\n",2);
 	// DELETE
 	if(strcmp(mode, "-d") == 0 && strcmp(file, "/") != 0){
 		 // Path-Wechsel: Papierkorb
@@ -115,14 +130,14 @@ int trashcan(char *mode, char *file){	// return 1 == FAIL,	return 0 == SUCCESS
 
 		// Was soll in den Papierkorb?
 		strcat(path, "/");
-		strcat(path, file);
+		strcat(path, file);//### falls der Pfad ./a/b/c/file.txt ist, wird der Trashcan pfad ./trashcan/a/b/c/file.txt, werden die Ordner automatisch erstellt
 	
 		// kopiere in den Papierkorb
 		copy(file, path);
 
 		// loesche original
 		check = unlink(file);
-		if(check == -1) return(1);
+		if(check == -1) return(1);//###ist nur -1 ein Fehler? alternetiv "return check;"...
 		return(0);
 	}
 	// LIST
@@ -137,11 +152,12 @@ int trashcan(char *mode, char *file){	// return 1 == FAIL,	return 0 == SUCCESS
 	    
 	    // Ordner oeffnen
     	directory = opendir(path);
-    	if(directory != 0) return(1);	// Fehler
+    	if(!directory) return(1);	// Fehler
     	
     	// solange auslesen, bis alle Dateien ausgelesen
     	while ((dir = readdir(directory)) != NULL){
-            // printf("%s\n", dir->d_name);
+			write(1,dir->d_name,myStrlen(dir->d_name));
+			write(1,"\n",2);
         }
         closedir(directory);
     	return(0);
@@ -159,6 +175,9 @@ int trashcan(char *mode, char *file){	// return 1 == FAIL,	return 0 == SUCCESS
 		strcat(pathTrashcan, trashcanName);
 		strcat(pathTrashcan, "/");
 		strcat(pathTrashcan, file);
+		write(1,"TRASHCAN: \t ",13);
+		write(1,pathTrashcan,myStrlen(pathTrashcan));
+		write(1,"\n",2);
 		// printf("TRASHCAN: \t %s\n", pathTrashcan);
 
 		// pruefen, ob Datei existiert
@@ -171,20 +190,23 @@ int trashcan(char *mode, char *file){	// return 1 == FAIL,	return 0 == SUCCESS
 			// Datei im Verzeichnis wiederherstellen
 			close(check);
 			strcat(path, "/"); strcat(path, file);
+			write(1,"PATH: \t\t ", 10);
+			write(1,path,myStrlen(path));
+			write(1,"\n", 2);
 			// printf("PATH \t\t %s\n", path);
 			copy(pathTrashcan, path);
 		}
 		// RECOVER ENDE
 
 		// und im Papierkorb loeschen
-		unlink(pathTrashcan);
-		return(0);
+		unlink(pathTrashcan);//###Leere Ordner dürfen über bleiben oder sollen die auch gelöscht werden, bzw. werden die automatisch gelöscht?
+		return(0);//###falls trashcan nun leer ist, soll der Ordner dann gelöscht werden oder wid es vllt. automatisch?
 	}
 	
 	return(1);
 }
 
-int myStrlen(char p[]){
+int myStrlen(char p[]){//###Funktioniert es so? Array ist eig. nicht deklariert, es fahlt die Länganangabe...->Pointer
 	int len = 0;
 	
 	for(int i = 0; p[i] != '\0'; ++i){
