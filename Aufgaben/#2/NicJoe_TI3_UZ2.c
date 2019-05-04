@@ -1,12 +1,5 @@
 /*	Nicolai Wolfrom & Joel Heuer 
 	TI III - Uebung #2 Programmierung
-
-
-
-	TO DO:
-		1) 	Ordner trashcan unsichtbar machen koennen
-		
-		ist er doch, da . dvor steht...
 */
 
 #include <sys/stat.h>	// mkdir & open
@@ -34,11 +27,14 @@ int main(int argc, char *argv[]){
 
 	int  a;
 
-	if(argc < 2) 		return(1);
+	if(argc < 2){
+		write(1, "ERROR: Missing arguments!\n", myStrlen("ERROR: Missing arguments!\n"));
+		return(1);
+	} 	
 	else if(argc == 2)  a = trashcan(argv[1], "/");
 	else 				a = trashcan(argv[1], argv[2]);
 
-	if(a) write(1,"Fehler\n", 8);
+	// if(a) write(1,"Fehler\n", 8);
 
     return(a);
 }
@@ -51,14 +47,17 @@ int copy(char *sourcename, char *targetname){
 	int checkRead = 0, checkWrite = 0; 	// wie viele Bytes wurden gelesen/geschrieben
 
 	// pruefen, ob Quelle existiert
-	write(1,sourcename,myStrlen(sourcename));
-	write(1,"\n",2);
+//	write(1,sourcename,myStrlen(sourcename));
+//	write(1,"\n",2);
 	fdSource = open(sourcename, O_RDONLY);
-	if(fdSource < 0) return(1); 
+	if(fdSource < 0){
 
+		write(1, "ERROR: Can't open sourcefile!\n", myStrlen("ERROR: Can't open sourcefile!\n"));
+		return(1); 
+	} 
 	// pruefen, ob Ziel schon existiert
-	write(1,targetname,myStrlen(targetname));
-	write(1,"\n",2);
+//	write(1,targetname,myStrlen(targetname));
+//	write(1,"\n",2);
 	fdTryTarget = open(targetname, O_WRONLY);
 	// falls nein, Datei erstellen
 	if(fdTryTarget < 0){
@@ -66,7 +65,10 @@ int copy(char *sourcename, char *targetname){
 		while(1){
 			// Quelle lesen 
 			checkRead = read(fdSource, buffer, PUFFERSIZE);
-			if(checkRead < 0) return(1);	// ERROR
+			if(checkRead < 0){
+				write(1, "ERROR: Can't read sourcefile!\n", myStrlen("ERROR: Can't read sourcefile!\n"));
+				return(1);
+			} 
 			else if(checkRead == 0) break;	// Falls am Ende der Datei, stopppe
 			do{							// sonst in Ziel hineinschreiben
 				// so viel schreiben, wie gelesen wurde
@@ -96,6 +98,7 @@ int copy(char *sourcename, char *targetname){
 		return(0);
 	}
 	// falls ja, beende 
+	write(1, "ERROR: targetfile already exists!\n", myStrlen("ERROR: targetfile already exists!\n"));
 	return(1);
 }
 // MAIN-ENDE
@@ -107,7 +110,8 @@ int trashcan(char *mode, char *file){	// return 1 == FAIL,	return 0 == SUCCESS
 	// Papierkorb erstellen, falls nicht vorhanden
 	// mit folgenden Berechtigungen: Lesen, Schreiben, Suchen [Besitzer & Gruppe]
 	// 								 Lesen, suchen 			  [Andere]
-	check = mkdir(trashcanName, 0755 /*| S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH*/);
+	check = mkdir(trashcanName, 0755 /*| S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH*/); // sind paar Berechtigungen, 
+									// aber keine Ahnung wie man konkret sieht welche eine Datei hat.
 	// if(check == -1) return(1);	// Ordner existiert schon
 
 	// CHECK FOR VALID FILE-NAME
@@ -115,13 +119,19 @@ int trashcan(char *mode, char *file){	// return 1 == FAIL,	return 0 == SUCCESS
 
 	// aktuelles Verzeichnis bzw. Path
 	char path[PATHSIZE];
-    if (getcwd(path, sizeof(path)) == NULL) // Fehler
-    	return(1);	
+	char *checkPath = getcwd(path, sizeof(path));
+	if(checkPath == NULL){
+		write(1, "ERROR: Can't find path!\n", myStrlen("ERROR: Can't find path!\n"));
+		return(1);
+	} 
+    //  if (getcwd(path, sizeof(path)) == NULL) // Fehler
+    	//return(1);	
 
-	write(1,mode,myStrlen(mode));
-	write(1,", ",3);
-	write(1,mode,myStrlen(mode));
-	write(1,"\n",2);
+	//write(1,mode,myStrlen(mode));
+	//write(1,", ",3);
+	//write(1,mode,myStrlen(mode));
+	//write(1,"\n",2);
+
 	// DELETE
 	if(strcmp(mode, "-d") == 0 && strcmp(file, "/") != 0){
 		 // Path-Wechsel: Papierkorb
@@ -137,7 +147,10 @@ int trashcan(char *mode, char *file){	// return 1 == FAIL,	return 0 == SUCCESS
 
 		// loesche original
 		check = unlink(file);
-		if(check == -1) return(1);//###ist nur -1 ein Fehler? alternetiv "return check;"...
+		if(check == -1){
+			write(1, "ERROR: Can't delete file!\n", myStrlen("ERROR: Can't delete file!\n"));
+			return(1);//###ist nur -1 ein Fehler? alternetiv "return check;"...
+		} 
 		return(0);
 	}
 	// LIST
@@ -152,7 +165,10 @@ int trashcan(char *mode, char *file){	// return 1 == FAIL,	return 0 == SUCCESS
 	    
 	    // Ordner oeffnen
     	directory = opendir(path);
-    	if(!directory) return(1);	// Fehler
+    	if(!directory){
+    		write(1, "ERROR: Can't open trashcan!\n", myStrlen("ERROR: Can't open trashcan!\n"));
+	    	return(1);	// Fehler
+    	} 
     	
     	// solange auslesen, bis alle Dateien ausgelesen
     	while ((dir = readdir(directory)) != NULL){
@@ -175,14 +191,18 @@ int trashcan(char *mode, char *file){	// return 1 == FAIL,	return 0 == SUCCESS
 		strcat(pathTrashcan, trashcanName);
 		strcat(pathTrashcan, "/");
 		strcat(pathTrashcan, file);
-		write(1,"TRASHCAN: \t ",13);
-		write(1,pathTrashcan,myStrlen(pathTrashcan));
-		write(1,"\n",2);
+	//	write(1,"TRASHCAN: \t ",13);
+	//	write(1,pathTrashcan,myStrlen(pathTrashcan));
+	//	write(1,"\n",2);
 		// printf("TRASHCAN: \t %s\n", pathTrashcan);
 
 		// pruefen, ob Datei existiert
 		check = open(pathTrashcan, O_RDONLY);
-		if(check < 0) return(1);
+		if(check < 0){
+			write(1, "ERROR: Can't open file! Maybe file does not exist.\n", 
+				myStrlen("ERROR: Can't open file! Maybe file does not exist.\n"));
+			return(1);
+		} 
 
 		// FUER RECOVOVER
 		if(strcmp(mode, "-r") == 0){
@@ -190,9 +210,9 @@ int trashcan(char *mode, char *file){	// return 1 == FAIL,	return 0 == SUCCESS
 			// Datei im Verzeichnis wiederherstellen
 			close(check);
 			strcat(path, "/"); strcat(path, file);
-			write(1,"PATH: \t\t ", 10);
-			write(1,path,myStrlen(path));
-			write(1,"\n", 2);
+		//	write(1,"PATH: \t\t ", 10);
+		//	write(1,path,myStrlen(path));
+		//	write(1,"\n", 2);
 			// printf("PATH \t\t %s\n", path);
 			copy(pathTrashcan, path);
 		}
@@ -202,7 +222,8 @@ int trashcan(char *mode, char *file){	// return 1 == FAIL,	return 0 == SUCCESS
 		unlink(pathTrashcan);//###Leere Ordner dürfen über bleiben oder sollen die auch gelöscht werden, bzw. werden die automatisch gelöscht?
 		return(0);//###falls trashcan nun leer ist, soll der Ordner dann gelöscht werden oder wid es vllt. automatisch?
 	}
-	
+	write(1, "ERROR: wrong instruction!\nTry\t-d file\n\t-r file\n\t-f file\n\t-l\n",
+			 myStrlen("ERROR: wrong instruction!\nTry\t-d file\n\t-r file\n\t-f file\n\t-l\n"));
 	return(1);
 }
 
