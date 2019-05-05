@@ -1,5 +1,8 @@
 #include <stdio.h>
-
+#include <sys/types.h>	// pid_t
+#include <sys/wait.h>	// wait(int *)
+#include <unistd.h>		// fork()
+#include <stdlib.h>		// exit(int)
 #define SIZE 256	// Array groesse
 
 int wc(char *);
@@ -9,6 +12,8 @@ int my_isword(int *, char);
 int my_strlen(char *);
 
 int main(int argc, char *argv[]){
+
+	int check = 0;		// Flag ob my_wc funktioniert hat
 
 	// Falls Pipe-Eingabe
 	if(argc < 2){ 
@@ -32,11 +37,31 @@ int main(int argc, char *argv[]){
 			}
 			newbuffer[i] = buffer[i];
 		}
-		wc(newbuffer);	
-		return(0);
+		check = wc(newbuffer);	
 	}
-	else wc(argv[1]);
-	return(0);
+	else if(argc == 2) check = wc(argv[1]);
+	else{ /*argc > 2 */
+		pid_t pids[argc-1];
+		int status[argc-1]; 	// für wait();
+
+		// erzeuge neue KIndprozesse mit for-loop
+		for(int i = 0; i < argc-1; ++i){
+			// Neuer Kindprozess
+			pids[i] = fork();
+			if(pids[i] == 0){
+				check = wc(argv[i+1]);
+				if(check){
+					fprintf(stderr, "ERROR: child-process %d\n", i);
+				} 
+				// Kindprozess i beenden
+				exit(1);
+			}
+			// Elternprozess wartet bis Kindprozesse der Reihe nach beendet sind
+			wait(&status[i]);
+		} // for
+	}
+
+	return(check);
 }
 
 int wc(char *filename){
@@ -56,7 +81,7 @@ int wc(char *filename){
 		return (1);
 	}
 
-	fprintf(stdout, "Lesen möglich.\n");
+	fprintf(stdout, "%s\n", filename);	// Fuer Pipeumleitung wichtig.
 
 	while(  c =fgetc(filepointer), c != EOF){		// Bis EndOfFile lesen
 		if(my_isword(&wasword, c)){
