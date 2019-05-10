@@ -5,7 +5,9 @@
 #include <stdlib.h>		// exit(int)
 #define SIZE 256	// Array groesse
 
-int wc(char *);
+// int nums[3] = {0,0,0};
+
+int wc(FILE *);
 int my_isspace(char x);
 int my_isword(int *, char);
 
@@ -16,72 +18,53 @@ int main(int argc, char *argv[]){
 	int check = 0;		// Flag ob my_wc funktioniert hat
 
 	// Falls Pipe-Eingabe
-	if(argc < 2){ 
-		char buffer[SIZE];
-		int  len;
-		// zu wenige argumente, also mit stdin abfangen
-		// Kopiere Inhalt von stdin in Array
-		fgets(buffer, SIZE, stdin);
-
-		// Ermittle groesse von stdin
-		for(int i = 0; ! my_isspace(buffer[i]); ++i){
-			len++;
-			if(my_isspace(buffer[i+1])) len++;	// für '\0'
-		}
-		//kopiere array
-		char newbuffer[len];
-		for(int i = 0; i < len; ++i){
-			if(i == len-1){
-			 	newbuffer[i] = '\0';	// statt '\n' jetzt '\0'
-			 	break;
-			}
-			newbuffer[i] = buffer[i];
-		}
-		check = wc(newbuffer);	
+	if(argc < 2){
+		check = wc(stdin); 
+		printf("\n");
 	}
-	else if(argc == 2) check = wc(argv[1]);
+	 
+	else if(argc == 2){
+		FILE *fp = fopen(argv[1], "r");
+		check = wc(fp);
+		fclose(fp);
+		printf("%s\n", argv[1]);
+	} 
 	else{ /*argc > 2 */
 		pid_t pids[argc-1];
 		int status[argc-1]; 	// für wait();
+		FILE *fp ;
 
 		// erzeuge neue KIndprozesse mit for-loop
 		for(int i = 0; i < argc-1; ++i){
+
 			// Neuer Kindprozess
 			pids[i] = fork();
 			if(pids[i] == 0){
-				check = wc(argv[i+1]);
+				fp = fopen(argv[i+1], "r");
+				check = wc(fp);
+				printf("%s\n", argv[i+1]);
 				if(check){
 					fprintf(stderr, "ERROR: child-process %d\n", i);
 				} 
 				// Kindprozess i beenden
+				fclose(fp);
 				exit(1);
 			}
 			// Elternprozess wartet bis Kindprozesse der Reihe nach beendet sind
 			wait(&status[i]);
 		} // for
+		// printf(" %d %d %d insgesamt\n", nums[0], nums[1], nums[2]);
 	}
 
 	return(check);
 }
 
-int wc(char *filename){
+int wc(FILE *filepointer){
 	int c;					// speichert ascii wert?????????
 	int wasword = 0;		// ist vorgaenger zeichen ein teil eines worts?
 	int counter_word = 0;
 	int counter_lines = 0;
 	int counter_char  = 0;
-	FILE *filepointer = fopen(filename, "r"); // Öffne erstes Argument (Muss Datei sein)
-	if(filepointer == NULL){
-		fprintf(stderr, "ERROR: Can't open file %s\n", filename);
-		return(1);
-	}
-
-	if(filepointer == NULL){
-		// Lesen moeglich
-		return (1);
-	}
-
-	fprintf(stdout, "%s\n", filename);	// Fuer Pipeumleitung wichtig.
 
 	while(  c =fgetc(filepointer), c != EOF){		// Bis EndOfFile lesen
 		if(my_isword(&wasword, c)){
@@ -90,17 +73,16 @@ int wc(char *filename){
 		if(c == '\n') counter_lines++;
 		counter_char++;
 	}
-
-	fclose(filepointer);	// Schließt Datei
-	fprintf(stdout, "%d, %d, %d\n", counter_lines, counter_word, counter_char);
+	fprintf(stdout, "%d %d %d ", counter_lines, counter_word, counter_char);
+	// nums[0] += counter_lines;
+	// nums[1] += counter_word;
+	// nums[2] += counter_char;
 	return(0);
 }
-
 int my_isspace(char x){
 	return( x == 32 || x == '\t' || x == '\n' || 
 	    	x == '\f'  || x == '\r' || x == '\v');
 }
-
 int my_isword(int *wasword, char c){
 	// FALL 1
 	if(my_isspace(c)){

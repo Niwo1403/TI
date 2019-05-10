@@ -14,29 +14,12 @@ int main(int argc, char *argv[]){
 	int check = 0;			// Flag ob my_cat funktioniert
 
 	if(argc < 2){ // Zu wenige Argumente
-		/*fprintf(stderr, "%s\n", "cat-ERROR: Missing arguments");
-		return(1); */
-		char buffer[SIZE];
-		int  len;
-		// zu wenige argumente, also mit stdin abfangen
-		// Kopiere Inhalt von stdin in Array
-		fgets(buffer, SIZE, stdin);
 
-		// Ermittle groesse von stdin
-		for(int i = 0; ! my_isspace(buffer[i]); ++i){
-			len++;
-			if(my_isspace(buffer[i+1])) len++;	// für '\0'
-		}
-		//kopiere array
-		char newbuffer[len];
-		for(int i = 0; i < len; ++i){
-			if(i == len-1){
-			 	newbuffer[i] = '\0';	// statt '\n' jetzt '\0'
-			 	break;
-			}
-			newbuffer[i] = buffer[i];
-		}
-		check = my_cat(newbuffer);	
+		// lese von stdin ein
+		char c;
+		while( EOF != (c = getchar() ))
+			fprintf(stdout, "%c",c );
+		return(0);	
 	}
 	else if(argc == 2) check = my_cat(argv[1]);
 	else{ /* argc > 2 */
@@ -65,8 +48,7 @@ int main(int argc, char *argv[]){
 }
 int my_cat(char *arr){
 	int c; 		// char der gelesen wird
-	fprintf(stdout, "%s\n", arr);	// Fuer Pipe-Umleitung , die fuer b) gefordert ist.
-						// '\n' ist wichtig!
+	
 	// ist die Datei gueltig?
 	FILE *filepointer = fopen(arr, "r");
 	if(filepointer == NULL){
