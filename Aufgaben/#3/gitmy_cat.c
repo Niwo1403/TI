@@ -48,11 +48,11 @@ int main(int argc, char *argv[]){
 }
 int my_cat(char *arr){
 	int c; 		// char der gelesen wird
-	
+
 	// ist die Datei gueltig?
 	FILE *filepointer = fopen(arr, "r");
 	if(filepointer == NULL){
-		fprintf(stderr, "my_cat-ERROR: Can't open file!\n");// Kann Datei nicht öffnen
+		fprintf(stderr, "my_cat-ERROR: Can't open file %s!\n", arr);// Kann Datei nicht öffnen
 		return(1);
 	}
 	// solange lesen bis end_of_file erreicht

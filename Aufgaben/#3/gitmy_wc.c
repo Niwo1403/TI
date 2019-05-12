@@ -25,9 +25,14 @@ int main(int argc, char *argv[]){
 	 
 	else if(argc == 2){
 		FILE *fp = fopen(argv[1], "r");
-		check = wc(fp);
-		fclose(fp);
-		printf("%s\n", argv[1]);
+		if (fp == NULL){
+			fprintf(stderr, "my_wc-ERROR: Can't open file %s!\n", argv[1]);// Kann Datei nicht öffnen
+			return(1);
+		}else{
+			check = wc(fp);
+			fclose(fp);
+			printf("%s\n", argv[1]);
+		}
 	} 
 	else{ /*argc > 2 */
 		pid_t pids[argc-1];
@@ -41,13 +46,18 @@ int main(int argc, char *argv[]){
 			pids[i] = fork();
 			if(pids[i] == 0){
 				fp = fopen(argv[i+1], "r");
-				check = wc(fp);
-				printf("%s\n", argv[i+1]);
-				if(check){
-					fprintf(stderr, "ERROR: child-process %d\n", i);
-				} 
-				// Kindprozess i beenden
-				fclose(fp);
+				if (fp == NULL){
+					fprintf(stderr, "my_wc-ERROR: Can't open file %s!\n", argv[i+1]);// Kann Datei nicht öffnen
+					return(1);
+				}else{
+					check = wc(fp);
+					printf("%s\n", argv[i+1]);
+					if(check){
+						fprintf(stderr, "ERROR: child-process %d\n", i);
+					} 
+					// Kindprozess i beenden
+					fclose(fp);
+				}
 				exit(1);
 			}
 			// Elternprozess wartet bis Kindprozesse der Reihe nach beendet sind
