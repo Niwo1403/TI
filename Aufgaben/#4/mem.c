@@ -1,7 +1,6 @@
 // INCLUDES
 #include <stdio.h>
 #include <string.h> //strcpy
-#include <stdlib.h> //malloc für init Funktion
 
 // DEFINEs
 #define MEM_SIZE 256
@@ -19,6 +18,7 @@ void memory_free(void* pointer);
 void memory_print();
 
 //VARIABLEN
+char memory[MEM_SIZE];
 struct mem_block *first;
 
 int main(){
@@ -53,7 +53,7 @@ int main(){
 }
 
 void memory_init(){
-	first = (struct mem_block *) malloc(MEM_SIZE);//Speicher der Größe MEM_SIZE suchen
+	first = &memory;//Speicher der Größe MEM_SIZE suchen
 	first->size = 0;//size=0 entspricht leeren Speicher und kann also für die erste Variable genutzt werden
 	first->next = NULL;
 }
