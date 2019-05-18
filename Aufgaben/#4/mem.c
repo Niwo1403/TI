@@ -1,139 +1,138 @@
-/*	Speicherverwaltung
-
-	Unsere Datenstruktur ist LinkList 
-
-	o----o----o----o----o----o----NULL
-
-	Wobei jedes o ein Knoten (Datum) ist. 
-	Knoten speichert: key (position), wert (string), *next (nächster Knoten)
-
-	String wird als char* gespeichert.
-
-*/
-
 // INCLUDES
 #include <stdio.h>
-#include <unistd.h>
-#include <stdlib.h>
+#include <string.h> //strcpy
+#include <stdlib.h> //malloc für init Funktion
 
-// DEFINES
-#define MEMSIZE 256	
+// DEFINEs
+#define MEM_SIZE 256
 
-// STRUCTS
-struct node{
-	int value;
-	// char memory[MEMSIZE];
-	struct node *pred;
-	struct node *succ;
+//STRUCTS
+struct mem_block{
+	size_t size;
+	struct mem_block *next;
 };
 
-struct linkedList{			// Funktioniert wegen pop() nur fuer positive Zahlen. 
-	int amount;				// ist aber ausreichend für unseren Speicher. Weil alle Zellen
-	struct node *tail;		// positive Nummer haben
-};
-
-
-// FUNKTIONEN
+//FUNKTIONEN
 void memory_init();
+void* memory_allocate(size_t byte_count);
+void memory_free(void* pointer);
+void memory_print();
+
+//VARIABLEN
+struct mem_block *first;
+
+int main(){
+	//Linked List initialisieren:
+	memory_init();
 	
-	// fuer Linked-List
-void push(struct linkedList *list, int x);
-int pop(struct linkedList *list);
-void displayTailtoHead(struct linkedList list);
+	//Speicher reservieren
+	char *h = (char *) memory_allocate(6), *w = (char *) memory_allocate(5), *ptr = (char *) memory_allocate(31), *end = (char *) memory_allocate(14);
+	strcpy(h, "Hello");
+	strcpy(w, "Welt");
+	strcpy(ptr, "Dieser Text liegt im Speicher.");
+	strcpy(end, "Letzter Block");
 
+	//Speicher ausgeben
+	puts("Gesamter Text:");
+	memory_print();
 
+	//Block entfernen und durch zwei andere ersetzen
+	memory_free((void *) ptr);
+	char *ptra = (char *) memory_allocate(6), *ptrb = (char *) memory_allocate(5);
+	strcpy(ptra, "Neuer");
+	strcpy(ptrb, "Text");
+	puts("\nBlock löschen und durch zwei andere ersetzen:");
+	memory_print();
+	
+	//Letztes Element löschen
+	memory_free((void *) end);
+	puts("\nLetztes Element entfernt:");
+	memory_print();
 
-// MAIN
-int main(int argc, char *argv[]){
-	struct linkedList list = {0, NULL};
-	int input;
-
-	// Liste fuellen
-	do{
-		// Eingabe
-		printf("Zahl: ");
-		scanf("%d", &input);
-
-		// Liste fuellen
-		if(input != -1) push(&list, input);
-	}while(input != -1);
-
-	// Liste ausgeben
-	displayTailtoHead(list);
-
-	// Liste leeren
-	while(list.tail != NULL){
-		printf("%d\n", list.amount);
-		pop(&list);
-	}
-	return(0);
+	return 0;
 }
 
-
-
-void push(struct linkedList *list, int x){
-
-	// leere Liste
-	if(list->amount == 0){
-		// neuer Speicherplatz für tail, muss Speicher für Node haben
-		list->tail = malloc(sizeof(struct node));	
-		struct node tmp = {x, NULL, NULL};
-		*list->tail = tmp;
-		list->amount++;
-		return;
-	}
-
-	// nicht leere Liste
-	list->tail->succ = malloc(sizeof(struct node));	
-
-	struct node tmp = {x, list->tail, NULL};
-	*list->tail->succ = tmp;
-	list->tail = list->tail->succ;			// Pointer nur veraendern, nicht Inhalt
-	list->amount++;
-	return;	
+void memory_init(){
+	first = (struct mem_block *) malloc(MEM_SIZE);//Speicher der Größe MEM_SIZE suchen
+	first->size = 0;//size=0 entspricht leeren Speicher und kann also für die erste Variable genutzt werden
+	first->next = NULL;
 }
 
-int pop(struct linkedList *list){
-	// Liste leer
-	if (list->amount == 0){
-		return -1;
+void* memory_allocate(size_t byte_count){
+	struct mem_block *zs = first;//um first wieder auf dem Anfangszustand zu setzen
+	unsigned long last = (long)(first + 1) + first->size; //letzte noch beschriebene Position
+	while (first->next != NULL){
+		if (first->size == 0 && (size_t)((long)(first->next)) - (size_t)((long)(first + 1)) >= byte_count){ //falls leerer Block vorhanden und Lücke groß genug ist
+			first->size = byte_count;
+			struct mem_block *ret = first;
+			first = zs;
+			return (void *) (ret + 1);//Speicherposition gefunden
+		}else if ((long)first->next - ((long)(first + 1) + first->size) >= byte_count + sizeof(struct mem_block)){ //guckt ob Lücke groß genug ist
+			struct mem_block *new_block = (struct mem_block *) ((long)(first + 1) + first->size);//neues Element der Liste(Speciherblock)
+			new_block->size = byte_count;
+			new_block->next = first->next;
+			first->next = new_block;
+			first = zs;
+			return (void *) (new_block + 1);//Speicherposition gefunden
+		}
+		last = (long)(first + 1) + first->size; //letzte noch beschriebene Position aktuallisieren
+		first = first->next;
 	}
 
-	// Liste nur ein Element
-	if(list->amount == 1){
-		int res = list->tail->value;
-		free(list->tail);
-		list->tail = NULL;
-		list->amount--;
-		return res;
+	//Es wurde kein freier Platz gefunden, also wird probiert hinten ein Block anzuhängen
+	if (first->size == 0 && (size_t)((long)(first->next)) - (size_t)((long)(first + 1)) >= byte_count){ //falls leerer Block (size = 0) vorhanden und Lücke danach groß genug ist
+		first->size = byte_count;
+		struct mem_block *ret = first;
+		first = zs;
+		return (void *) (ret + 1);//Speicherposition gefunden
+	}else if ((unsigned long) MEM_SIZE - ((long)first - (long)zs) >= byte_count + sizeof(struct mem_block)){ //test ob am Ende noch Platz ist
+		struct mem_block *new_block = (struct mem_block *) ((long)(first + 1) + first->size);
+		new_block->size = byte_count;
+		new_block->next = first->next;
+		first->next = new_block;
+		first = zs;
+		return (void *) (new_block + 1);//Speicherposition gefunden
+	}else{ //keine Position gefunden
+		first = zs;
+		return (void *)-1;
 	}
-	// liste nicht leer
-	int res = list->tail->value;
-
-	list->tail = list->tail->pred;
-	free(list->tail->succ);
-	list->amount--;
-
-	return res;
 }
 
-void displayTailtoHead(struct linkedList list){
-
-	// Leere Liste
-	if(list.amount == 0){
-		printf("[]\n");
-		return;
+void memory_free(void* pointer){
+	struct mem_block *zs = first; // dient als Zwischenspeicher um die Linked List anzupassen
+	struct mem_block *block = (struct mem_block *) pointer; // Block der entfern werden soll
+	block -= 1;
+	if (block == first){//falls erster Speicherblock gelöscht werden soll
+		first->size = 0;//Speicher jz leer
+		char *c = (char *) (first + 1);
+		*c = '\0';//String clearn
 	}
-
-	struct node *start = list.tail;		// Merke dir den Pointer
-
-	printf("[");
-	while(list.tail != NULL){
-		if(list.tail == start) 	printf("%d", list.tail->value);	// Ist das der End/Startknoten?
-		else					printf(", %d", list.tail->value);
-		list.tail = list.tail->pred;
+	struct mem_block *prev = zs;
+	while (zs->next != NULL && zs != block){//läuft eig. bis zs die Speicherzelle vor dem zu löschenden Block ist
+		prev = zs;
+		zs = zs->next;
 	}
-	printf("]\n");
+	if (zs->next != NULL){//sonst error, OutOfBounds
+		zs->size = 0;
+		char *c = (char *) (zs + 1);
+		*c = '\0';//String clearn
+	}else{ //ist letztes Element der Linked List und LinkedList hat mind. zwei Elemente (zs hat vorgänger)
+		prev->next = NULL;
+	}
+}
 
-	return;
+void memory_print(){
+	struct mem_block *zs = first;//um first wieder auf dem Anfangszustand zu setzen
+	int mem_block_num = 1; // Beinhaltet um welchen Block es sich handelt (für die Ausgabe)
+	while (first != NULL){
+		printf("---Block: %d:-------\n\t", mem_block_num);
+		mem_block_num++;
+		char *c = (char *) (first + 1);//beinhaltet Speicheradresse des ersten Char des Speicherblocks 
+		for (size_t i = 0; i < first->size; i++)
+			printf("%c", *(c++)); //gibt char aus und schiebt Pointer um eine Stelle weiter
+		puts("");//new line
+		first = first->next;
+	}
+	printf("---End of memory---\n\n");
+	first = zs;
 }
