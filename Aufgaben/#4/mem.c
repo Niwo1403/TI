@@ -53,40 +53,40 @@ int main(){
 }
 
 void memory_init(){
-	first = &memory;//Speicher der Größe MEM_SIZE suchen
+	first = (struct mem_block*) &memory;//Speicher der Größe MEM_SIZE suchen
 	first->size = 0;//size=0 entspricht leeren Speicher und kann also für die erste Variable genutzt werden
 	first->next = NULL;
 }
 
 void* memory_allocate(size_t byte_count){
 	struct mem_block *zs = first;//um first wieder auf dem Anfangszustand zu setzen
-	unsigned long last = (long)(first + 1) + first->size; //letzte noch beschriebene Position
+	unsigned long last = (unsigned long)(first + 1) + first->size; //letzte noch beschriebene Position
 	while (first->next != NULL){
-		if (first->size == 0 && (size_t)((long)(first->next)) - (size_t)((long)(first + 1)) >= byte_count){ //falls leerer Block vorhanden und Lücke groß genug ist
+		if (first->size == 0 && (size_t)((unsigned long)(first->next)) - (size_t)((unsigned long)(first + 1)) >= byte_count){ //falls leerer Block vorhanden und Lücke groß genug ist
 			first->size = byte_count;
 			struct mem_block *ret = first;
 			first = zs;
 			return (void *) (ret + 1);//Speicherposition gefunden
-		}else if ((long)first->next - ((long)(first + 1) + first->size) >= byte_count + sizeof(struct mem_block)){ //guckt ob Lücke groß genug ist
-			struct mem_block *new_block = (struct mem_block *) ((long)(first + 1) + first->size);//neues Element der Liste(Speciherblock)
+		}else if ((unsigned long)first->next - ((unsigned long)(first + 1) + first->size) >= byte_count + sizeof(struct mem_block)){ //guckt ob Lücke groß genug ist
+			struct mem_block *new_block = (struct mem_block *) ((unsigned long)(first + 1) + first->size);//neues Element der Liste(Speciherblock)
 			new_block->size = byte_count;
 			new_block->next = first->next;
 			first->next = new_block;
 			first = zs;
 			return (void *) (new_block + 1);//Speicherposition gefunden
 		}
-		last = (long)(first + 1) + first->size; //letzte noch beschriebene Position aktuallisieren
+		last = (unsigned long)(first + 1) + first->size; //letzte noch beschriebene Position aktuallisieren
 		first = first->next;
 	}
 
 	//Es wurde kein freier Platz gefunden, also wird probiert hinten ein Block anzuhängen
-	if (first->size == 0 && (size_t)((long)(first->next)) - (size_t)((long)(first + 1)) >= byte_count){ //falls leerer Block (size = 0) vorhanden und Lücke danach groß genug ist
+	if (first->size == 0 && (size_t)((unsigned long)(first->next)) - (size_t)((unsigned long)(first + 1)) >= byte_count){ //falls leerer Block (size = 0) vorhanden und Lücke danach groß genug ist
 		first->size = byte_count;
 		struct mem_block *ret = first;
 		first = zs;
 		return (void *) (ret + 1);//Speicherposition gefunden
-	}else if ((unsigned long) MEM_SIZE - ((long)first - (long)zs) >= byte_count + sizeof(struct mem_block)){ //test ob am Ende noch Platz ist
-		struct mem_block *new_block = (struct mem_block *) ((long)(first + 1) + first->size);
+	}else if ((unsigned long) MEM_SIZE - ((unsigned long)first - (unsigned long)zs) >= byte_count + sizeof(struct mem_block)){ //test ob am Ende noch Platz ist
+		struct mem_block *new_block = (struct mem_block *) ((unsigned long)(first + 1) + first->size);
 		new_block->size = byte_count;
 		new_block->next = first->next;
 		first->next = new_block;
@@ -113,9 +113,7 @@ void memory_free(void* pointer){
 		zs = zs->next;
 	}
 	if (zs->next != NULL){//sonst error, OutOfBounds
-		zs->size = 0;
-		char *c = (char *) (zs + 1);
-		*c = '\0';//String clearn
+		prev->next = zs->next;// Zu löschendes Element aus Liste entfernen
 	}else{ //ist letztes Element der Linked List und LinkedList hat mind. zwei Elemente (zs hat vorgänger)
 		prev->next = NULL;
 	}
@@ -125,7 +123,7 @@ void memory_print(){
 	struct mem_block *zs = first;//um first wieder auf dem Anfangszustand zu setzen
 	int mem_block_num = 1; // Beinhaltet um welchen Block es sich handelt (für die Ausgabe)
 	while (first != NULL){
-		printf("---Block: %d:-------\n\t", mem_block_num);
+		printf("---Block: %d:---Adr.: %d-\n\t", mem_block_num, first);
 		mem_block_num++;
 		char *c = (char *) (first + 1);//beinhaltet Speicheradresse des ersten Char des Speicherblocks 
 		for (size_t i = 0; i < first->size; i++)
