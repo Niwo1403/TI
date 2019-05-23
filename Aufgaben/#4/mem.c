@@ -60,7 +60,6 @@ void memory_init(){
 
 void* memory_allocate(size_t byte_count){
 	struct mem_block *zs = first;//um first wieder auf dem Anfangszustand zu setzen
-	unsigned long last = (unsigned long)(first + 1) + first->size; //letzte noch beschriebene Position
 	while (first->next != NULL){
 		if (first->size == 0 && (size_t)((unsigned long)(first->next)) - (size_t)((unsigned long)(first + 1)) >= byte_count){ //falls leerer Block vorhanden und Lücke groß genug ist
 			first->size = byte_count;
@@ -75,7 +74,6 @@ void* memory_allocate(size_t byte_count){
 			first = zs;
 			return (void *) (new_block + 1);//Speicherposition gefunden
 		}
-		last = (unsigned long)(first + 1) + first->size; //letzte noch beschriebene Position aktuallisieren
 		first = first->next;
 	}
 
@@ -123,7 +121,7 @@ void memory_print(){
 	struct mem_block *zs = first;//um first wieder auf dem Anfangszustand zu setzen
 	int mem_block_num = 1; // Beinhaltet um welchen Block es sich handelt (für die Ausgabe)
 	while (first != NULL){
-		printf("---Block: %d:---Adr.: %d-\n\t", mem_block_num, first);
+		printf("---Block: %d:---Adr.: %lu-\n\t", mem_block_num, (unsigned long)first);
 		mem_block_num++;
 		char *c = (char *) (first + 1);//beinhaltet Speicheradresse des ersten Char des Speicherblocks 
 		for (size_t i = 0; i < first->size; i++)
