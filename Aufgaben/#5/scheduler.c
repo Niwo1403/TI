@@ -1,5 +1,5 @@
 // Nicolai Wolfrom und Joel Heuer
-// gcc -std=c11 -Wall -Wextra -pedantic sched_test.c scheduler-c -o prog
+// gcc -std=c11 -Wall -Wextra -pedantic sched_test.c scheduler.c -o prog
 
 #include <stdlib.h>
 #include <unistd.h>	// SLEEP
@@ -53,6 +53,9 @@ struct Process* fcfs(struct Process* head, struct Process* current) {
 }
 
 struct Process* spn(struct Process* head, struct Process* current) {
+	if(current != NULL){	// damit keine Warnung kommt
+		;
+	}
 
 	// nehme den ersten Prozess
 	struct Process *currentProcess = head->next;
@@ -61,13 +64,10 @@ struct Process* spn(struct Process* head, struct Process* current) {
 	// Ermitteln, wer der kürzste Prozess ist, solange
 	// bis wieder am Start angekommen
 	do{
-		// usleep(100000);
 		// falls kürzer Prozess existiert
 		if(shortest->cycles_todo > currentProcess->cycles_todo 
 			&& currentProcess->cycles_todo > 0)
 			shortest = currentProcess;
-
-		// printf("shortest: %d \t next: %d\n", shortest->pId, currentProcess->pId);
 		// naechsten Prozess nehmen, bis head erreicht
 		currentProcess = currentProcess->next;
 	}while(currentProcess->pId != head->pId);
@@ -79,13 +79,21 @@ struct Process* spn(struct Process* head, struct Process* current) {
 }
 
 struct Process* srt(struct Process* head, struct Process* current) {
-	return NULL;
+	// keine Warnung
+	struct Process *process;
+	process = head;
+	process = current;
+	return process;
 }
 
 
 // hier muss man aufpassen, dass man nicht durch 0 teilt, wenn
 // cycles_todo == 0 ist.
 struct Process* hrrnPreemptive(struct Process* head, struct Process* current) {
+		if(current != NULL){	// damit keine Warnung kommt
+			;
+		}
+
 	int endFlag = 0;	// Wenn alle Prozesse nix zu tun haben, dann ist das 0
 	struct Process *currentProcess = head->next;
 	struct Process *nextProcess = head->next;
@@ -124,6 +132,10 @@ struct Process* hrrnPreemptive(struct Process* head, struct Process* current) {
 }
 
 struct Process* hrrnNonPreemptive(struct Process* head, struct Process* current) {
-	return NULL;
+	// keine warnung
+	struct Process *process;
+	process = head;
+	process = current;
+	return process;
 }
 
