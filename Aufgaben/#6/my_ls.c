@@ -65,7 +65,7 @@ int ls(char *path){
     struct stat statbuffer;//für Filetest
     int ret = 0;
     stat(path, &statbuffer);
-    if (! S_ISDIR(statbuffer.st_mode)){//test ob File oder Ordner aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa Test geht nicht, besseren finden
+    if (! S_ISDIR(statbuffer.st_mode)){//test ob File oder Ordner
         //File
         ret = print_file_infos(path);
     }else{
