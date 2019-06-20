@@ -119,8 +119,10 @@ int udp_s(){
         perror("Datei konnte nicht gelesen werden.");
         return 1;
     }
-    while ((len = fread(buf, 1, 4096, file)) > 0)
+    while ((len = fread(buf, 1, 4095, file)) > 0){
+        *(buf+len) = '\0';
         printf("%ld\n", sendto(sockfd, (const char *)buf, strlen(buf)+1, MSG_CONFIRM, (const struct sockaddr *) &cliaddr, sizeof(cliaddr))); 
+    }
 
     //Verbindungen etc. schließen
     free(buf);

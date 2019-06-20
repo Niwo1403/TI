@@ -1,0 +1,12 @@
+Die Tests mit den drei Parametern, wurden alle auf einem Computer (in zwei Terminals) getestet. 
+
+Unix-Socket:
+Die (lokale) Verbindung hat funktioniert und konnte den Pfad und den Inhalt der Datei senden.
+
+UDP-Socket:
+Das Senden hat nur bedingt funktioniert. Der Pfad kommt erfolgreich am Server an, der auch die Datei senden kann, beim schicken des Inhalts kommt es aber zu einem Fehler (return: -1). Das Schicken von reinem Text hatte teilweise funktioniert, dies aber auch nur am Anfang bedingt. Den Fehler der dafür sorgte, dass der Dateiinhalt nicht gesendet werden konnte konnten wir nicht finden. Es könnte aber daran liegen, dass entweder die beim Server über den Client eingehende Daten Fehlerhaft sind und somit die Rücksende Adresse nicht richtig ist oder das ein Parameter der send Funktion fahlerhaft wahr.
+
+TCP-Socket:
+der Tcp Socket hat im Gegensatz zum udp Socket von Anfang an funktioniert.
+
+Allgemein: da der TSP und Unix Socket funktioniert haben und der Code relativ ähnlich ist, gehen wir davon aus das der Fehler entweder bei den oben gennannten Funktionen liegt oder es an der genutzten Linuxversion, Port oder ähnliches liegt, das der udp Server kein Text schicken kann.
