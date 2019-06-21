@@ -1,5 +1,0 @@
-Hallo World
-Dieser Text steht in dem auszugebenen Dokument.
-
-...
-
