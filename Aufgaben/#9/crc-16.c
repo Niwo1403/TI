@@ -71,9 +71,9 @@ int main(int argc, char *argv[]){
 
     //crc errechnen
     
-    uint16_t rest = 0; 
+    long rest = 0; 
     for (int i = 0; i < elements; i++){
-        if ( ((rest >> 31) & 1) != *content)
+        if ( ((rest >> 16) & 1) != *content)
             rest = (rest << 1) ^ BIT_MASK;
         else
             rest = (rest << 1);
@@ -107,7 +107,7 @@ int main(int argc, char *argv[]){
         }
         //rest ans Ende schreiben
         char ias[23];//int als String
-        sprintf(ias, "\n%d", rest);
+        sprintf(ias, "\n%ld", rest);
         fwrite(ias, 1, strlen(ias), file_src);
         //dest file schließen
         fclose(file_dest);
