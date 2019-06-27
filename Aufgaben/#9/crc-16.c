@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdint.h>
 
 #define BIT_MASK 0x18005 //gegeben (Das Polynom)
 #define BIT_MAX 0x1ffff //alle 17 Stellen 1sen
@@ -48,18 +49,18 @@ int main(int argc, char *argv[]){
     }
 
     //Filepointer zu Quelldatei erstellen
-    FILE *file_src = fopen(argv[1], "rb");
+    FILE *file_src = fopen(argv[1], "r");
     if (file_src == NULL)
         return 1;
 
     //Src lesen
     int *content = malloc(0);
-    int buf[1];
+    char buf[1];
     int elements = 0;
-    while ((len = fread(buf, 4, 1, file_src)) > 0){
+    while ((len = fread(buf, 1, 1, file_src)) > 0){
         elements += len;
-        content = realloc(content, elements*sizeof(long));
-        *(content+elements-1) = *buf;//Element ans Ende anhängen
+        content = realloc(content, elements*sizeof(int));
+        *(content+elements-1) = (int)*buf;//Element ans Ende anhängen
     }
     elements++;
     content = realloc(content, elements*sizeof(long));
@@ -67,13 +68,19 @@ int main(int argc, char *argv[]){
     //File schließen
     fclose(file_src);
 
-    //crc für alle Elemente aufrufen und Ergebnis an nächstes Element ran hängen (letztes Element ist 0 und dann das Ergebnis)
-    int rest = 0; 
+
+    //crc errechnen
+    
+    uint16_t rest = 0; 
     for (int i = 0; i < elements; i++){
-        rest = crc16(*content + rest) << 16; //geshiftet um den Rest an den Anfang zu schreiben
+        if ( ((rest >> 31) & 1) != *content)
+            rest = (rest << 1) ^ BIT_MASK;
+        else
+            rest = (rest << 1);
         content++;
     }
-    content -= elements;//Poiner zurücksetzen
+    //Poiner zurücksetzen
+    content -= elements;
     //rest ist das Ergebnis
 
     //Test ob crc Wert stimmt oder Dokument mit crc Wert schreiben
@@ -116,20 +123,4 @@ int bin_len(int num){
         num = num >> 1;
     }
     return count;
-}
-
-int crc16(int arg){
-    //mit Nullen auffüllen
-    long bits = arg << 16;
-    long res = bits;
-
-    //so oft teilen wie möglich
-    for(int i = bin_len(bits)-16; i > 0; i--)
-        bits = bits%(BIT_MASK << i);
-    
-    //XOR mit BIT_MASK um den Rest zu erhalten
-    bits = bits ^ BIT_MASK;
-    res += bits;//res beinhaltet die Ursprüngliche Zahl mit den Nullen am Ende 
-
-    return (int)res;//res ist immer klein genug für int
 }
