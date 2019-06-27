@@ -2,10 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <stdint.h>
 
 #define BIT_MASK 0x18005 //gegeben (Das Polynom)
-#define BIT_MAX 0x1ffff //alle 17 Stellen 1sen
 
 int bin_len(int);
 int crc16(int);
