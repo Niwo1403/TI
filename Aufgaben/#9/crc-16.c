@@ -3,7 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#define BIT_MASK 0x18005 //gegeben (Das Polynom)
+#define BIT_MASK 0x8005//gegeben (Das Polynom)
 
 int bin_len(int);
 int crc16(int);
@@ -71,7 +71,7 @@ int main(int argc, char *argv[]){
     
     long rest = 0; 
     for (int i = 0; i < elements; i++){
-        if ( ((rest >> 16) & 1) != *content)
+        if ( ((rest >> 15) & 1) != *content)
             rest = (rest << 1) ^ BIT_MASK;
         else
             rest = (rest << 1);
