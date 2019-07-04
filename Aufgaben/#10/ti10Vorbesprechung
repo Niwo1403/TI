@@ -1,0 +1,54 @@
+traceroute www...com
+
+udp Socket öffnen und setsockopts() aufrufen und den TTL-Wert setzen
+Packete werden in Schleife mit entsprechenden TTL-Wert losschicken.
+
+Antworten abfangen:
+	Die kommen über ICMP (gleiche Ebene im OSI-Modell wie IP)
+	Für Fehlermeldungen ist dieses Protokoll gut.
+	Es gibt aber kein fertigen Socket, sondern RAW_SOCKET
+	---> man-page
+
+	Protokoll-Parameter: IPPROTO_ICMP
+	Nun kann der RAW_SOCKET senden und Antworten bekommen
+
+
+			
+
+
+		IP		<-- IP
+		ICMP		<-- was für ein Typ von von ICMP
+		DATA		<-- IP von Paket was man losgesendet hat. && 8 Byte des UDP-Headers
+									1 Byte der 8 Byte ist Portnummer des Absenders (also wenn wir das senden, unsere Portnummer)
+									auslesen und vgl. mit Portnummer von wo wir gesendet haben
+									wenn gleich, dann die IP vom IP-Header ausgegeben.
+
+	
+
+
+
+
+
+----> beej. Guide kann wieder hilfreich sein
+--> Programmstarten: mit Root-Rechten
+--> man bekommt noch andere ICMP-Pakete. 
+	--> man muss überprüfen ob ein Paket wirklich eine Antwort für uns ist.
+
+--> viele Firewalls blockieren, also nicht jede URL möglich.
+--> Manchmal werden noch andere UDP-Pakete gesendet.
+
+
+
+
+
+Programmstrutur:
+	- 2 Sockets erstellen:			sock_out = sock(...)
+						sock_in = sock(AF_INET, SOCK_RAW, IPPROTO_ICMP)
+
+						for(int i = 1; i < 30; i++){
+							setsockopts(...);
+							send(sock_out);	
+							recv(sock_in);
+						}
+
+
