@@ -52,9 +52,27 @@ int main(int argc, char *argv[]){
 		    if(content[i] != 0) 
                 istRichtig = 0;
 
-        if(istRichtig) 
+        if(istRichtig) {
+            FILE *src = fopen(argv[1], "r");
+            *(argv[1]+strlen(argv[1])-4) = '\0';
+            FILE *dest = fopen(argv[1], "w");
+            if(src==NULL || dest==NULL)
+                return 1;
+            char bin[2];
+            fread(bin, 1, 2, src);
+
+            char c;
+            while (fread(&c, 1, 1, src) > 0){
+                fwrite(bin, 1, 1, dest);
+                bin[0] = bin[1];
+                bin[1] = c;
+            }
+
+            fclose(src);
+            fclose(dest);
+
             printf("Die Datei ist korrekt.\n");
-        else
+        }else
             printf("Die Datei ist nicht korrekt.\n");
 	}else{
         //keine .crc Datei
